@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg18-trixie
+    container_name: semantic-search-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-semantic_search}
+      POSTGRES_USER: ${POSTGRES_USER:-semantic_search}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-semantic_search}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  adminer:
+    image: adminer:5
+    container_name: semantic-search-adminer
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres-data:

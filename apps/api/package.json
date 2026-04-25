@@ -1,0 +1,33 @@
+{
+  "name": "@semantic-search/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "nest build",
+    "dev": "nest start --watch",
+    "start": "node dist/src/main.js",
+    "test": "vitest run",
+    "migration:run": "node -r ts-node/register ./node_modules/typeorm/cli.js -d database/data-source.ts migration:run",
+    "migration:revert": "node -r ts-node/register ./node_modules/typeorm/cli.js -d database/data-source.ts migration:revert"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.0",
+    "@nestjs/core": "^11.0.1",
+    "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/typeorm": "^11.0.0",
+    "dotenv": "^16.4.7",
+    "pg": "^8.13.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "typeorm": "^0.3.20"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.0",
+    "@nestjs/testing": "^11.0.1",
+    "@types/pg": "^8.11.10",
+    "source-map-support": "^0.5.21",
+    "ts-node": "^10.9.2",
+    "vitest": "^2.1.8"
+  }
+}
