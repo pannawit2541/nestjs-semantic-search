@@ -14,6 +14,6 @@ export class Book {
   @Column({ type: "int", nullable: true })
   declare publishedYear: number | null;
 
-  @Column("vector", { length: 1536 })
+  @Column("vector", { length: 768 })
   declare embedding: number[];
 }
