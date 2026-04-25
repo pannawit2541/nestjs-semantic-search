@@ -29,6 +29,11 @@ export class OpenAiEmbeddingProvider
       }),
     });
 
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`OpenAI API error ${res.status}: ${body}`);
+    }
+
     const json = (await res.json()) as {
       data: { embedding: number[] }[];
     };
