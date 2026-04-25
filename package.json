@@ -12,6 +12,7 @@
     "test": "turbo test",
     "db:up": "docker compose up -d postgres adminer",
     "db:down": "docker compose down",
+    "api:migration:generate": "pnpm --filter @semantic-search/api migration:generate",
     "api:migration:run": "pnpm --filter @semantic-search/api migration:run",
     "api:migration:revert": "pnpm --filter @semantic-search/api migration:revert"
   },

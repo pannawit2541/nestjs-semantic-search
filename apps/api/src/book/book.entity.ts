@@ -1,16 +1,19 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Book {
-  @PrimaryGeneratedColumn()
-  id!: number;
+  @PrimaryGeneratedColumn("uuid")
+  declare uuid: string;
 
-  @Column({ type: 'varchar' })
-  title!: string;
+  @Column({ type: "varchar" })
+  declare title: string;
 
-  @Column({ type: 'varchar', nullable: true })
-  description!: string | null;
+  @Column({ type: "varchar", nullable: true })
+  declare description: string | null;
 
-  @Column({ type: 'int', nullable: true })
-  publishedYear!: number | null;
+  @Column({ type: "int", nullable: true })
+  declare publishedYear: number | null;
+
+  @Column("vector", { length: 1536 })
+  declare embedding: number[];
 }

@@ -7,6 +7,7 @@
     "dev": "nest start --watch",
     "start": "node dist/src/main.js",
     "test": "vitest run",
+    "migration:generate": "node database/scripts/generate-migration.js",
     "migration:run": "node -r ts-node/register ./node_modules/typeorm/cli.js -d database/data-source.ts migration:run",
     "migration:revert": "node -r ts-node/register ./node_modules/typeorm/cli.js -d database/data-source.ts migration:revert"
   },
