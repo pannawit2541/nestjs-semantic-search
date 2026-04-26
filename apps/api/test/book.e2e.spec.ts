@@ -9,18 +9,19 @@ import { join } from "path";
 import { Book } from "../src/book/book.entity";
 import { BookService } from "../src/book/book.service";
 import { BookController } from "../src/book/book.controller";
-import { EMBEDDING_PROVIDER } from "../src/embedding/embedding.interface";
+import { EMBEDDING_PROVIDER } from "../src/embedding/embedding.type";
 import { SemanticSearchService } from "../src/semantic-search/semantic-search.service";
-import { BookVectorRepository } from "../src/semantic-search/repositories/book-vector.repository";
-import { SEMANTIC_SEARCH_REPO } from "../src/semantic-search/repositories/vector-search.repository";
+import { SemanticIndexRepository } from "../src/semantic-search/repositories/semantic-index.repository";
+import { SemanticEmbedding } from "../src/semantic-search/semantic-embedding.entity";
 import { typeOrmOptions } from "../database/typeorm.options";
 import { Repository } from "typeorm";
 
-const MOCK_EMBEDDING = new Array(768).fill(0);
+const MOCK_EMBEDDING = [1, ...new Array(767).fill(0)];
 
 describe("BookController (e2e)", () => {
   let app: INestApplication;
   let bookRepo: Repository<Book>;
+  let semanticEmbeddingRepo: Repository<SemanticEmbedding>;
   let createdUuids: string[] = [];
 
   beforeAll(async () => {
@@ -28,20 +29,27 @@ describe("BookController (e2e)", () => {
       imports: [
         ConfigModule.forRoot({
           isGlobal: true,
-          envFilePath: [join(process.cwd(), "../../.env.local"), join(process.cwd(), "../../.env")],
+          envFilePath: [
+            join(process.cwd(), "../../.env.local"),
+            join(process.cwd(), "../../.env"),
+          ],
         }),
         TypeOrmModule.forRootAsync({ useFactory: typeOrmOptions }),
-        TypeOrmModule.forFeature([Book]),
+        TypeOrmModule.forFeature([Book, SemanticEmbedding]),
       ],
       controllers: [BookController],
       providers: [
         BookService,
         SemanticSearchService,
-        BookVectorRepository,
-        { provide: EMBEDDING_PROVIDER, useValue: { embed: async () => MOCK_EMBEDDING } },
+        SemanticIndexRepository,
         {
-          provide: SEMANTIC_SEARCH_REPO,
-          useExisting: BookVectorRepository,
+          provide: EMBEDDING_PROVIDER,
+          useValue: {
+            provider: "test",
+            model: "test-embedding",
+            dimension: 768,
+            embed: async () => MOCK_EMBEDDING,
+          },
         },
       ],
     }).compile();
@@ -50,9 +58,12 @@ describe("BookController (e2e)", () => {
     await app.init();
 
     bookRepo = moduleRef.get("BookRepository");
+    semanticEmbeddingRepo = moduleRef.get("SemanticEmbeddingRepository");
+    await semanticEmbeddingRepo.delete({ ownerType: "book" });
   });
 
   afterAll(async () => {
+    await semanticEmbeddingRepo.delete({ ownerType: "book" });
     if (createdUuids.length > 0) {
       await bookRepo.delete(createdUuids);
     }
@@ -64,7 +75,10 @@ describe("BookController (e2e)", () => {
       const res = await supertest
         .agent(app.getHttpServer())
         .post("/books")
-        .send({ title: "Clean Code", description: "A Handbook of Agile Software Craftsmanship" })
+        .send({
+          title: "Clean Code",
+          description: "A Handbook of Agile Software Craftsmanship",
+        })
         .expect(201);
 
       expect(res.body).toMatchObject({
@@ -72,7 +86,7 @@ describe("BookController (e2e)", () => {
         description: "A Handbook of Agile Software Craftsmanship",
       });
       expect(res.body.uuid).toBeDefined();
-      expect(res.body.embedding).toEqual(MOCK_EMBEDDING);
+      expect(res.body.embedding).toBeUndefined();
 
       createdUuids.push(res.body.uuid);
     });
@@ -132,8 +146,9 @@ describe("BookController (e2e)", () => {
 
       expect(Array.isArray(res.body)).toBe(true);
       expect(res.body.length).toBeGreaterThan(0);
-      expect(res.body[0].title).toBeDefined();
-      expect(res.body[0].uuid).toBeDefined();
+      expect(res.body[0].item.title).toBeDefined();
+      expect(res.body[0].item.uuid).toBeDefined();
+      expect(res.body[0].score).toBeTypeOf("number");
     });
 
     it("returns empty array when no matches", async () => {
@@ -143,6 +158,13 @@ describe("BookController (e2e)", () => {
         .expect(200);
 
       expect(Array.isArray(res.body)).toBe(true);
+    });
+
+    it("returns 400 when query is missing", async () => {
+      await supertest
+        .agent(app.getHttpServer())
+        .get("/books/search")
+        .expect(400);
     });
   });
 });
