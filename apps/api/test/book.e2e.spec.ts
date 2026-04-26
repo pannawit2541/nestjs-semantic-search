@@ -11,6 +11,8 @@ import { BookService } from "../src/book/book.service";
 import { BookController } from "../src/book/book.controller";
 import { EMBEDDING_PROVIDER } from "../src/embedding/embedding.interface";
 import { SemanticSearchService } from "../src/semantic-search/semantic-search.service";
+import { BookVectorRepository } from "../src/semantic-search/repositories/book-vector.repository";
+import { SEMANTIC_SEARCH_REPO } from "../src/semantic-search/repositories/vector-search.repository";
 import { typeOrmOptions } from "../database/typeorm.options";
 import { Repository } from "typeorm";
 
@@ -34,8 +36,13 @@ describe("BookController (e2e)", () => {
       controllers: [BookController],
       providers: [
         BookService,
+        SemanticSearchService,
+        BookVectorRepository,
         { provide: EMBEDDING_PROVIDER, useValue: { embed: async () => MOCK_EMBEDDING } },
-        { provide: SemanticSearchService, useValue: { search: async () => [] } },
+        {
+          provide: SEMANTIC_SEARCH_REPO,
+          useExisting: BookVectorRepository,
+        },
       ],
     }).compile();
 
@@ -113,6 +120,29 @@ describe("BookController (e2e)", () => {
         .agent(app.getHttpServer())
         .get("/books/00000000-0000-0000-0000-000000000000")
         .expect(404);
+    });
+  });
+
+  describe("GET /books/search", () => {
+    it("returns books matching the query", async () => {
+      const res = await supertest
+        .agent(app.getHttpServer())
+        .get("/books/search?query=Clean&limit=5")
+        .expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body.length).toBeGreaterThan(0);
+      expect(res.body[0].title).toBeDefined();
+      expect(res.body[0].uuid).toBeDefined();
+    });
+
+    it("returns empty array when no matches", async () => {
+      const res = await supertest
+        .agent(app.getHttpServer())
+        .get("/books/search?query=zzznonexistentzzz&limit=5")
+        .expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
     });
   });
 });

@@ -13,7 +13,7 @@ export class BookVectorRepository implements VectorSearchRepository<Book> {
     return this.repo
       .createQueryBuilder("book")
       .orderBy("book.embedding <=> :embedding", "ASC")
-      .setParameter("embedding", embedding)
+      .setParameter("embedding", `[${embedding.join(",")}]`)
       .limit(limit)
       .getMany();
   }

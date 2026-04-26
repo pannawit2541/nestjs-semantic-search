@@ -3,24 +3,22 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { SemanticSearchService } from "./semantic-search.service";
 import { EmbeddingModule } from "../embedding/embedding.module";
 import {
-  VECTOR_REPOSITORIES,
+  SEMANTIC_SEARCH_REPO,
   VectorSearchRepository,
 } from "./repositories/vector-search.repository";
 
-//TODO: refactor
 @Module({})
 export class SemanticSearchModule {
   static forFeature(
-    repositoryTypes: Type<VectorSearchRepository>[],
+    repositoryType: Type<VectorSearchRepository>,
     entities: Type[] = [],
   ): DynamicModule {
     const providers: Provider[] = [
-      ...repositoryTypes,
-      ...repositoryTypes.map((Repo) => ({
-        provide: VECTOR_REPOSITORIES,
-        useExisting: Repo,
-        multi: true,
-      })),
+      repositoryType,
+      {
+        provide: SEMANTIC_SEARCH_REPO,
+        useExisting: repositoryType,
+      },
       SemanticSearchService,
     ];
 
