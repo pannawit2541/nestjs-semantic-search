@@ -1,11 +1,15 @@
 import { Injectable, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { EmbeddingProvider } from "../embedding.interface";
+import { EmbeddingProvider } from "../embedding.type";
 
 @Injectable()
 export class OpenAiEmbeddingProvider
   implements EmbeddingProvider, OnModuleInit
 {
+  readonly provider = "openai";
+  readonly model = "text-embedding-3-small";
+  readonly dimension = 1536;
+
   declare private apiKey?: string;
   constructor(private readonly configService: ConfigService) {}
 
@@ -24,7 +28,7 @@ export class OpenAiEmbeddingProvider
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "text-embedding-3-small",
+        model: this.model,
         input: text,
       }),
     });

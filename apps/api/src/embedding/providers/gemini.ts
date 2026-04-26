@@ -1,11 +1,15 @@
 import { ConfigService } from "@nestjs/config";
-import { EmbeddingProvider } from "../embedding.interface";
+import { EmbeddingProvider } from "../embedding.type";
 import { Injectable, OnModuleInit } from "@nestjs/common";
 
 @Injectable()
 export class GeminiEmbeddingProvider
   implements EmbeddingProvider, OnModuleInit
 {
+  readonly provider = "gemini";
+  readonly model = "gemini-embedding-001";
+  readonly dimension = 768;
+
   declare private apiKey?: string;
   constructor(private readonly configService: ConfigService) {}
 
@@ -18,7 +22,7 @@ export class GeminiEmbeddingProvider
 
   async embed(text: string): Promise<number[]> {
     const res = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=" +
+      `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:embedContent?key=` +
         this.apiKey,
       {
         method: "POST",
@@ -29,7 +33,7 @@ export class GeminiEmbeddingProvider
           content: {
             parts: [{ text }],
           },
-          outputDimensionality: 768,
+          outputDimensionality: this.dimension,
         }),
       },
     );

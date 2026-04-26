@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -25,7 +26,13 @@ export class BookController {
 
   @Get("search")
   search(@Query() searchBookDto: SearchBookDto) {
-    return this.bookService.search(searchBookDto.query, searchBookDto.limit);
+    const query = searchBookDto.query?.trim();
+
+    if (!query) {
+      throw new BadRequestException("query is required");
+    }
+
+    return this.bookService.search(query, this.parseLimit(searchBookDto.limit));
   }
 
   @Get()
@@ -47,5 +54,15 @@ export class BookController {
   @HttpCode(204)
   remove(@Param("id") id: string) {
     return this.bookService.remove(id);
+  }
+
+  private parseLimit(limit?: number | string): number {
+    const parsedLimit = typeof limit === "string" ? Number(limit) : limit;
+
+    if (typeof parsedLimit !== "number" || !Number.isFinite(parsedLimit)) {
+      return 5;
+    }
+
+    return Math.min(Math.max(Math.trunc(parsedLimit), 1), 50);
   }
 }

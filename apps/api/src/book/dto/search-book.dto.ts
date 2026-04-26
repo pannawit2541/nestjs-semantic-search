@@ -1,4 +1,4 @@
 export class SearchBookDto {
   query!: string;
-  limit?: number = 5;
+  limit?: number | string;
 }
