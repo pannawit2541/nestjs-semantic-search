@@ -91,4 +91,17 @@ describe("BookService", () => {
 
     await expect(service.remove("missing")).rejects.toBeInstanceOf(NotFoundException);
   });
+
+  it("searches via semantic search service", async () => {
+    const books = [
+      { uuid: "a", title: "Clean Code" } as Book,
+      { uuid: "b", title: "Clean Architecture" } as Book,
+    ];
+    vi.mocked(semanticSearchService.search).mockResolvedValue(books);
+
+    const result = await service.search("clean");
+
+    expect(semanticSearchService.search).toHaveBeenCalledWith("clean", 5);
+    expect(result).toEqual(books);
+  });
 });

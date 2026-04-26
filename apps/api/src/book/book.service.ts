@@ -4,7 +4,10 @@ import { Repository } from "typeorm";
 import { Book } from "./book.entity";
 import { CreateBookDto } from "./dto/create-book.dto";
 import { UpdateBookDto } from "./dto/update-book.dto";
-import { EMBEDDING_PROVIDER, EmbeddingProvider } from "../embedding/embedding.interface";
+import {
+  EMBEDDING_PROVIDER,
+  EmbeddingProvider,
+} from "../embedding/embedding.interface";
 import { SemanticSearchService } from "../semantic-search/semantic-search.service";
 
 @Injectable()
@@ -14,7 +17,7 @@ export class BookService {
     private readonly bookRepository: Repository<Book>,
     @Inject(EMBEDDING_PROVIDER)
     private readonly embeddingProvider: EmbeddingProvider,
-    private readonly semanticSearchService: SemanticSearchService,
+    private readonly semanticSearchService: SemanticSearchService<Book>,
   ) {}
 
   async create(createBookDto: CreateBookDto): Promise<Book> {
@@ -69,7 +72,7 @@ export class BookService {
     }
   }
 
-  async search(query: string, limit: number = 5) {
+  async search(query: string, limit: number = 5): Promise<Book[]> {
     return this.semanticSearchService.search(query, limit);
   }
 }

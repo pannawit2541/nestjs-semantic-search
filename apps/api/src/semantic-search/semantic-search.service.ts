@@ -1,25 +1,18 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { EMBEDDING_PROVIDER } from "../embedding/embedding.interface";
-import { EmbeddingProvider } from "../embedding/embedding.interface";
-import {
-  VECTOR_REPOSITORIES,
-  VectorSearchRepository,
-} from "./repositories/vector-search.repository";
+import { EMBEDDING_PROVIDER, EmbeddingProvider } from "../embedding/embedding.interface";
+import { SEMANTIC_SEARCH_REPO, VectorSearchRepository } from "./repositories/vector-search.repository";
 
 @Injectable()
-export class SemanticSearchService<T = unknown> {
+export class SemanticSearchService<T> {
   constructor(
     @Inject(EMBEDDING_PROVIDER)
     private readonly embeddingProvider: EmbeddingProvider,
-    @Inject(VECTOR_REPOSITORIES)
-    private readonly repositories: VectorSearchRepository<T>[],
+    @Inject(SEMANTIC_SEARCH_REPO)
+    private readonly repository: VectorSearchRepository<T>,
   ) {}
 
-  async search(query: string, limit: number = 5) {
+  async search(query: string, limit: number = 5): Promise<T[]> {
     const embedding = await this.embeddingProvider.embed(query);
-    const results = await Promise.all(
-      this.repositories.map((repo) => repo.search(embedding, limit)),
-    );
-    return results;
+    return this.repository.search(embedding, limit);
   }
 }

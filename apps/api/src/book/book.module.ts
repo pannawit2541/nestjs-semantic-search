@@ -10,9 +10,8 @@ import { BookVectorRepository } from "../semantic-search/repositories/book-vecto
 @Module({
   imports: [
     TypeOrmModule.forFeature([Book]),
-    //TODO: refactor
     EmbeddingModule,
-    SemanticSearchModule.forFeature([BookVectorRepository], [Book]),
+    SemanticSearchModule.forFeature(BookVectorRepository, [Book]),
   ],
   controllers: [BookController],
   providers: [BookService],
