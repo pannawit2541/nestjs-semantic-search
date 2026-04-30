@@ -1,4 +1,4 @@
-import { GeminiEmbeddingProvider } from "./providers/gemini";
+import { LocalEmbeddingProvider } from "./providers/local";
 import { EMBEDDING_PROVIDER } from "./embedding.type";
 import { ConfigModule } from "@nestjs/config";
 import { Module } from "@nestjs/common";
@@ -8,7 +8,7 @@ import { Module } from "@nestjs/common";
   providers: [
     {
       provide: EMBEDDING_PROVIDER,
-      useClass: GeminiEmbeddingProvider,
+      useClass: LocalEmbeddingProvider,
     },
   ],
   exports: [EMBEDDING_PROVIDER],

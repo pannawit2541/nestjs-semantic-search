@@ -1,21 +1,23 @@
 services:
   postgres:
-    image: pgvector/pgvector:pg18-trixie
+    image: pgvector/pgvector:0.7.4-pg15
     container_name: semantic-search-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-semantic_search}
-      POSTGRES_USER: ${POSTGRES_USER:-semantic_search}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-semantic_search}
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - postgres-data:/var/lib/postgresql
+      - postgres-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
+    ports:
+      - "5432:5432"
+    networks:
+      - semantic-search-network
 
   adminer:
     image: adminer:5
@@ -28,6 +30,46 @@ services:
       ADMINER_DEFAULT_SERVER: postgres
     ports:
       - "8080:8080"
+    networks:
+      - semantic-search-network
+
+  ollama:
+    image: ollama/ollama:0.3.12
+    container_name: semantic-search-ollama
+    restart: unless-stopped
+    volumes:
+      - ollama-data:/root/.ollama
+    ports:
+      - "11434:11434"
+    networks:
+      - semantic-search-network
+
+  ollama-init:
+    image: alpine:3.20
+    container_name: semantic-search-ollama-init
+    depends_on:
+      - ollama
+    entrypoint: >
+      /bin/sh -c "
+      apk add --no-cache curl >/dev/null &&
+      echo '⏳ Waiting for Ollama API...' &&
+      until curl -sf http://ollama:11434/api/tags > /dev/null; do
+        sleep 2
+      done &&
+      echo '📦 Pulling model...' &&
+      curl -sf http://ollama:11434/api/pull -d '{
+        \"model\": \"mxbai-embed-large\"
+      }' &&
+      echo '✅ Model ready'
+      "
+    restart: "no"
+    networks:
+      - semantic-search-network
 
 volumes:
   postgres-data:
+  ollama-data:
+
+networks:
+  semantic-search-network:
+    driver: bridge
